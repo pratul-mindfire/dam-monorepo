@@ -1,113 +1,145 @@
-import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteAsset, uploadAssets, type Asset } from "../api/asset.api";
-import { useAssets } from "../hooks/useAssets";
-import "../styles/assets.css";
+import { useEffect, useRef, useState, type ChangeEvent, type DragEvent } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { type Asset } from '../api/asset.api'
+import { getExistingUsers, type ExistingUser } from '../api/auth.api'
+import { useAssets } from '../hooks/useAssets'
+import { useAuth } from '../hooks/useAuth'
+import '../styles/assets.css'
 
-const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50]
 
 const formatBytes = (bytes?: number) => {
   if (!bytes) {
-    return "0 B";
+    return '0 B'
   }
 
-  const units = ["B", "KB", "MB", "GB"];
-  let value = bytes;
-  let unitIndex = 0;
+  const units = ['B', 'KB', 'MB', 'GB']
+  let value = bytes
+  let unitIndex = 0
 
   while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024;
-    unitIndex += 1;
+    value /= 1024
+    unitIndex += 1
   }
 
-  return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
-};
+  return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`
+}
 
 const formatDate = (value?: string) => {
   if (!value) {
-    return "NA";
+    return 'NA'
   }
 
-  return new Date(value).toLocaleString();
-};
+  return new Date(value).toLocaleString()
+}
 
 const getAssetPreview = (asset: Asset) => {
-  if (asset.type?.startsWith("image/")) {
-    return asset.url;
+  if (asset.type?.startsWith('image/')) {
+    return asset.url
   }
 
-  return asset.metadata?.thumbnails?.[0]?.url || asset.url;
-};
+  return asset.metadata?.thumbnails?.[0]?.url || asset.url
+}
+
+const getAssetOwner = (asset: Asset) => {
+  if (asset.userId && typeof asset.userId === 'object') {
+    return asset.userId
+  }
+
+  return undefined
+}
+
+const getAssetOwnerId = (asset: Asset) => {
+  if (asset.userId && typeof asset.userId === 'object') {
+    return asset.userId._id
+  }
+
+  return asset.userId
+}
 
 const Assets = () => {
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const queryClient = useQueryClient();
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [isDragging, setIsDragging] = useState(false)
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(10)
+  const [searchInput, setSearchInput] = useState('')
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [shareAssetId, setShareAssetId] = useState<string | null>(null)
+  const [shareSearchInput, setShareSearchInput] = useState('')
+  const [shareSearch, setShareSearch] = useState('')
+  const [shareFeedback, setShareFeedback] = useState<Record<string, string>>({})
+  const [shareError, setShareError] = useState<Record<string, string>>({})
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  const { user } = useAuth()
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
-      setSearch(searchInput.trim());
-      setPage(1);
-    }, 300);
+      setSearch(searchInput.trim())
+      setPage(1)
+    }, 300)
 
-    return () => window.clearTimeout(timeoutId);
-  }, [searchInput]);
+    return () => window.clearTimeout(timeoutId)
+  }, [searchInput])
 
-  const { data, isLoading, isError, error, isFetching } = useAssets({
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setShareSearch(shareSearchInput.trim())
+    }, 250)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [shareSearchInput])
+
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    isFetching,
+    uploadMutation,
+    deleteMutation,
+    shareMutation,
+  } = useAssets({
     page,
     limit,
     search: search || undefined,
-    status: statusFilter === "all" ? undefined : statusFilter,
-    type: typeFilter === "all" ? undefined : typeFilter,
-  });
+    status: statusFilter === 'all' ? undefined : statusFilter,
+    type: typeFilter === 'all' ? undefined : typeFilter,
+  })
+  const usersQuery = useQuery({
+    queryKey: ['existing-users', shareSearch],
+    queryFn: () => getExistingUsers(shareSearch),
+    enabled: Boolean(shareAssetId),
+  })
 
-  const uploadMutation = useMutation({
-    mutationFn: uploadAssets,
-    onSuccess: () => {
-      setSelectedFiles([]);
-      queryClient.invalidateQueries({ queryKey: ["assets"] });
-    },
-  });
-  const deleteMutation = useMutation({
-    mutationFn: deleteAsset,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["assets"] });
-    },
-  });
-
-  const assets = data?.data ?? [];
-  const meta = data?.meta;
-  const totalAssets = meta?.total ?? 0;
-  const currentPage = meta?.page ?? page;
-  const currentLimit = meta?.limit ?? limit;
-  const totalPages = meta?.totalPages ?? 0;
-  const hasFilters = Boolean(search) || statusFilter !== "all" || typeFilter !== "all";
+  const assets = data?.data ?? []
+  const meta = data?.meta
+  const existingUsers = usersQuery.data?.data ?? []
+  const totalAssets = meta?.total ?? 0
+  const currentPage = meta?.page ?? page
+  const currentLimit = meta?.limit ?? limit
+  const totalPages = meta?.totalPages ?? 0
+  const hasFilters = Boolean(search) || statusFilter !== 'all' || typeFilter !== 'all'
 
   useEffect(() => {
     if (!meta) {
-      return;
+      return
     }
 
     if (totalPages === 0 && page !== 1) {
-      setPage(1);
-      return;
+      setPage(1)
+      return
     }
 
     if (totalPages > 0 && page > totalPages) {
-      setPage(totalPages);
+      setPage(totalPages)
     }
-  }, [meta, page, totalPages]);
+  }, [meta, page, totalPages])
 
   const mergeFiles = (incomingFiles: File[]) => {
     setSelectedFiles((currentFiles) => {
-      const nextFiles = [...currentFiles];
+      const nextFiles = [...currentFiles]
 
       incomingFiles.forEach((file) => {
         const alreadyAdded = nextFiles.some(
@@ -115,64 +147,110 @@ const Assets = () => {
             existingFile.name === file.name &&
             existingFile.size === file.size &&
             existingFile.lastModified === file.lastModified
-        );
+        )
 
         if (!alreadyAdded) {
-          nextFiles.push(file);
+          nextFiles.push(file)
         }
-      });
+      })
 
-      return nextFiles;
-    });
-  };
+      return nextFiles
+    })
+  }
 
   const handleFileSelection = (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    mergeFiles(files);
-    event.target.value = "";
-  };
+    const files = Array.from(event.target.files || [])
+    mergeFiles(files)
+    event.target.value = ''
+  }
 
   const handleDrop = (event: DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    setIsDragging(false);
-    mergeFiles(Array.from(event.dataTransfer.files || []));
-  };
+    event.preventDefault()
+    setIsDragging(false)
+    mergeFiles(Array.from(event.dataTransfer.files || []))
+  }
 
   const handleUpload = async () => {
     if (selectedFiles.length === 0 || uploadMutation.isPending) {
-      return;
+      return
     }
 
-    await uploadMutation.mutateAsync(selectedFiles);
-  };
+    await uploadMutation.mutateAsync(selectedFiles)
+    setSelectedFiles([])
+  }
 
   const removeSelectedFile = (indexToRemove: number) => {
-    setSelectedFiles((currentFiles) =>
-      currentFiles.filter((_, index) => index !== indexToRemove)
-    );
-  };
+    setSelectedFiles((currentFiles) => currentFiles.filter((_, index) => index !== indexToRemove))
+  }
 
   const handleDelete = async (assetId: string) => {
     if (deleteMutation.isPending) {
-      return;
+      return
     }
 
-    const confirmed = window.confirm("Delete this asset and its generated files?");
+    const confirmed = window.confirm('Delete this asset and its generated files?')
 
     if (!confirmed) {
-      return;
+      return
     }
 
-    await deleteMutation.mutateAsync(assetId);
-  };
+    await deleteMutation.mutateAsync(assetId)
+  }
 
   const clearFilters = () => {
-    setSearchInput("");
-    setSearch("");
-    setStatusFilter("all");
-    setTypeFilter("all");
-    setPage(1);
-  };
+    setSearchInput('')
+    setSearch('')
+    setStatusFilter('all')
+    setTypeFilter('all')
+    setPage(1)
+  }
+
+  const openSharePicker = (assetId: string) => {
+    setShareAssetId(assetId)
+    setShareSearchInput('')
+    setShareSearch('')
+    setShareError((current) => ({
+      ...current,
+      [assetId]: '',
+    }))
+  }
+
+  const closeSharePicker = () => {
+    setShareAssetId(null)
+    setShareSearchInput('')
+    setShareSearch('')
+  }
+
+  const handleShare = async (assetId: string, targetUser: ExistingUser) => {
+    if (shareMutation.isPending) {
+      return
+    }
+
+    try {
+      const response = await shareMutation.mutateAsync({ assetId, userId: targetUser.id })
+
+      setShareFeedback((current) => ({
+        ...current,
+        [assetId]: response.message || 'Asset shared successfully.',
+      }))
+      setShareError((current) => ({
+        ...current,
+        [assetId]: '',
+      }))
+      setShareAssetId(null)
+      setShareSearchInput('')
+      setShareSearch('')
+    } catch (mutationError) {
+      setShareFeedback((current) => ({
+        ...current,
+        [assetId]: '',
+      }))
+      setShareError((current) => ({
+        ...current,
+        [assetId]: (mutationError as Error)?.message || 'Share failed',
+      }))
+    }
+  }
 
   return (
     <div className="assets-page">
@@ -181,8 +259,8 @@ const Assets = () => {
           <p className="assets-kicker">Media Desk</p>
           <h1>Assets</h1>
           <p className="assets-subtitle">
-            Upload files with drag and drop, then track processing, thumbnails, and
-            transcoded outputs in one place.
+            Upload files with drag and drop, then track processing, thumbnails, and transcoded
+            outputs in one place.
           </p>
         </div>
 
@@ -204,19 +282,19 @@ const Assets = () => {
 
       <section className="assets-upload-panel">
         <div
-          className={`upload-dropzone ${isDragging ? "dragging" : ""}`}
+          className={`upload-dropzone ${isDragging ? 'dragging' : ''}`}
           onDragEnter={(event) => {
-            event.preventDefault();
-            setIsDragging(true);
+            event.preventDefault()
+            setIsDragging(true)
           }}
           onDragOver={(event) => {
-            event.preventDefault();
-            setIsDragging(true);
+            event.preventDefault()
+            setIsDragging(true)
           }}
           onDragLeave={(event) => {
-            event.preventDefault();
+            event.preventDefault()
             if (event.currentTarget === event.target) {
-              setIsDragging(false);
+              setIsDragging(false)
             }
           }}
           onDrop={handleDrop}
@@ -249,7 +327,7 @@ const Assets = () => {
               onClick={handleUpload}
               disabled={selectedFiles.length === 0 || uploadMutation.isPending}
             >
-              {uploadMutation.isPending ? "Uploading..." : "Upload assets"}
+              {uploadMutation.isPending ? 'Uploading...' : 'Upload assets'}
             </button>
           </div>
         </div>
@@ -265,11 +343,14 @@ const Assets = () => {
           ) : (
             <div className="selected-file-list">
               {selectedFiles.map((file, index) => (
-                <div key={`${file.name}-${file.lastModified}-${index}`} className="selected-file-card">
+                <div
+                  key={`${file.name}-${file.lastModified}-${index}`}
+                  className="selected-file-card"
+                >
                   <div>
                     <strong>{file.name}</strong>
                     <p>
-                      {file.type || "Unknown type"} · {formatBytes(file.size)}
+                      {file.type || 'Unknown type'} · {formatBytes(file.size)}
                     </p>
                   </div>
                   <button type="button" onClick={() => removeSelectedFile(index)}>
@@ -282,7 +363,7 @@ const Assets = () => {
 
           {uploadMutation.isError ? (
             <p className="asset-feedback error">
-              {(uploadMutation.error as Error)?.message || "Upload failed"}
+              {(uploadMutation.error as Error)?.message || 'Upload failed'}
             </p>
           ) : null}
 
@@ -314,8 +395,8 @@ const Assets = () => {
               <select
                 value={statusFilter}
                 onChange={(event) => {
-                  setStatusFilter(event.target.value);
-                  setPage(1);
+                  setStatusFilter(event.target.value)
+                  setPage(1)
                 }}
               >
                 <option value="all">All statuses</option>
@@ -331,8 +412,8 @@ const Assets = () => {
               <select
                 value={typeFilter}
                 onChange={(event) => {
-                  setTypeFilter(event.target.value);
-                  setPage(1);
+                  setTypeFilter(event.target.value)
+                  setPage(1)
                 }}
               >
                 <option value="all">All media</option>
@@ -347,8 +428,8 @@ const Assets = () => {
               <select
                 value={limit}
                 onChange={(event) => {
-                  setLimit(Number(event.target.value));
-                  setPage(1);
+                  setLimit(Number(event.target.value))
+                  setPage(1)
                 }}
               >
                 {PAGE_SIZE_OPTIONS.map((option) => (
@@ -376,7 +457,7 @@ const Assets = () => {
         ) : null}
         {isError ? (
           <p className="asset-feedback error">
-            {(error as Error)?.message || "Failed to load assets"}
+            {(error as Error)?.message || 'Failed to load assets'}
           </p>
         ) : null}
 
@@ -404,36 +485,41 @@ const Assets = () => {
                   </tr>
                 ) : (
                   assets.map((asset) => {
-                    const previewUrl = getAssetPreview(asset);
-                    const thumbnailCount = asset.metadata?.thumbnails?.length ?? 0;
-                    const variantCount = asset.metadata?.variants?.length ?? 0;
+                    const previewUrl = getAssetPreview(asset)
+                    const thumbnailCount = asset.metadata?.thumbnails?.length ?? 0
+                    const variantCount = asset.metadata?.variants?.length ?? 0
+                    const owner = getAssetOwner(asset)
+                    const ownerId = getAssetOwnerId(asset)
+                    const isOwner = ownerId === user?.id
 
                     return (
                       <tr key={asset._id}>
-                        <td>
+                        <td data-label="Preview">
                           <div className="asset-preview-frame">
                             {previewUrl ? (
-                              <img src={previewUrl} alt={asset.originalName || "Asset preview"} />
+                              <img src={previewUrl} alt={asset.originalName || 'Asset preview'} />
                             ) : (
                               <span>No preview</span>
                             )}
                           </div>
                         </td>
-                        <td>
+                        <td data-label="Name">
                           <div className="asset-name-cell">
-                            <strong>{asset.originalName || asset.name || "Unnamed asset"}</strong>
-                            <span>{asset.userId || "Unknown owner"}</span>
+                            <strong>{asset.originalName || asset.name || 'Unnamed asset'}</strong>
+                            <span>
+                              Owner: {owner?.name || owner?.email || ownerId || 'Unknown owner'}
+                            </span>
                           </div>
                         </td>
-                        <td>{asset.type || "NA"}</td>
-                        <td>{formatBytes(asset.size)}</td>
-                        <td>
+                        <td data-label="Type">{asset.type || 'NA'}</td>
+                        <td data-label="Size">{formatBytes(asset.size)}</td>
+                        <td data-label="Status">
                           <span className={`asset-status asset-status-${asset.status}`}>
-                            {asset.status || "unknown"}
+                            {asset.status || 'unknown'}
                           </span>
                         </td>
-                        <td>{formatDate(asset.createdAt)}</td>
-                        <td>
+                        <td data-label="Created">{formatDate(asset.createdAt)}</td>
+                        <td data-label="Outputs">
                           <div className="asset-output-cell">
                             <span>{thumbnailCount} thumbnails</span>
                             <span>{variantCount} variants</span>
@@ -444,18 +530,44 @@ const Assets = () => {
                             ) : null}
                           </div>
                         </td>
-                        <td>
-                          <button
-                            type="button"
-                            className="asset-delete-btn"
-                            onClick={() => handleDelete(asset._id)}
-                            disabled={deleteMutation.isPending}
-                          >
-                            {deleteMutation.isPending ? "Deleting..." : "Delete"}
-                          </button>
+                        <td data-label="Actions">
+                          <div className="asset-actions-cell">
+                            {isOwner ? (
+                              <>
+                                <button
+                                  type="button"
+                                  className="asset-share-btn"
+                                  onClick={() => openSharePicker(asset._id)}
+                                  disabled={shareMutation.isPending}
+                                >
+                                  Share
+                                </button>
+                                {shareError[asset._id] ? (
+                                  <p className="asset-feedback error asset-inline-feedback">
+                                    {shareError[asset._id]}
+                                  </p>
+                                ) : null}
+                                {shareFeedback[asset._id] ? (
+                                  <p className="asset-feedback success asset-inline-feedback">
+                                    {shareFeedback[asset._id]}
+                                  </p>
+                                ) : null}
+                                <button
+                                  type="button"
+                                  className="asset-delete-btn"
+                                  onClick={() => handleDelete(asset._id)}
+                                  disabled={deleteMutation.isPending}
+                                >
+                                  {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+                                </button>
+                              </>
+                            ) : (
+                              <span className="asset-shared-readonly">Shared with you</span>
+                            )}
+                          </div>
                         </td>
                       </tr>
-                    );
+                    )
                   })
                 )}
               </tbody>
@@ -467,7 +579,7 @@ const Assets = () => {
           <div className="assets-pagination">
             <p className="assets-pagination-summary">
               {totalAssets === 0
-                ? "No matching assets"
+                ? 'No matching assets'
                 : `Showing ${(currentPage - 1) * currentLimit + 1}-${Math.min(
                     currentPage * currentLimit,
                     totalAssets
@@ -500,8 +612,75 @@ const Assets = () => {
           </div>
         ) : null}
       </section>
-    </div>
-  );
-};
 
-export default Assets;
+      {shareAssetId ? (
+        <div className="share-modal-backdrop" role="presentation" onClick={closeSharePicker}>
+          <section
+            className="share-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="share-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="share-modal-header">
+              <div>
+                <p className="assets-kicker">Share Asset</p>
+                <h2 id="share-modal-title">Select an existing user</h2>
+              </div>
+              <button type="button" className="share-modal-close" onClick={closeSharePicker}>
+                Close
+              </button>
+            </div>
+
+            <label className="asset-control share-search-control">
+              <span>Find user</span>
+              <input
+                type="search"
+                value={shareSearchInput}
+                onChange={(event) => setShareSearchInput(event.target.value)}
+                placeholder="Search by name or email"
+              />
+            </label>
+
+            {usersQuery.isLoading ? <p className="asset-feedback">Loading users...</p> : null}
+            {usersQuery.isError ? (
+              <p className="asset-feedback error">
+                {(usersQuery.error as Error)?.message || 'Failed to load users'}
+              </p>
+            ) : null}
+            {shareError[shareAssetId] ? (
+              <p className="asset-feedback error">{shareError[shareAssetId]}</p>
+            ) : null}
+
+            {!usersQuery.isLoading && !usersQuery.isError ? (
+              <div className="share-user-list">
+                {existingUsers.length === 0 ? (
+                  <p className="share-user-empty">No existing users found.</p>
+                ) : (
+                  existingUsers.map((existingUser) => (
+                    <div key={existingUser.id} className="share-user-card">
+                      <div>
+                        <strong>{existingUser.name}</strong>
+                        <p>{existingUser.email}</p>
+                      </div>
+                      <button
+                        type="button"
+                        className="asset-share-btn"
+                        onClick={() => handleShare(shareAssetId, existingUser)}
+                        disabled={shareMutation.isPending}
+                      >
+                        {shareMutation.isPending ? 'Sharing...' : 'Share'}
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            ) : null}
+          </section>
+        </div>
+      ) : null}
+    </div>
+  )
+}
+
+export default Assets

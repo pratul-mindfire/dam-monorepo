@@ -3,7 +3,12 @@
  * Handles HTTP requests for login, logout, and registration
  */
 
-const { registerUser, loginUser } = require("../services/auth.service");
+const {
+  registerUser,
+  loginUser,
+  getCurrentUser,
+  listExistingUsers,
+} = require('../services/auth.service')
 
 /**
  * Register a new user
@@ -13,20 +18,20 @@ const { registerUser, loginUser } = require("../services/auth.service");
  */
 const register = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password } = req.body
 
     // Register user via service
-    const result = await registerUser(name, email, password);
+    const result = await registerUser(name, email, password)
 
     res.status(201).json({
       success: true,
-      message: "User registered successfully",
+      message: 'User registered successfully',
       data: result,
-    });
+    })
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
 /**
  * Login user with email and password
@@ -36,27 +41,27 @@ const register = async (req, res, next) => {
  */
 const login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { email, password } = req.body
 
     // Login user via service
-    const result = await loginUser(email, password);
+    const result = await loginUser(email, password)
 
     res.status(200).json({
       success: true,
-      message: "Login successful",
+      message: 'Login successful',
       data: result,
-    });
+    })
   } catch (error) {
     // Handle specific authentication errors
-    if (error.message.includes("Invalid email or password")) {
+    if (error.message.includes('Invalid email or password')) {
       return res.status(401).json({
         success: false,
         message: error.message,
-      });
+      })
     }
-    next(error);
+    next(error)
   }
-};
+}
 
 /**
  * Logout user
@@ -69,9 +74,9 @@ const login = async (req, res, next) => {
 const logout = (req, res) => {
   res.status(200).json({
     success: true,
-    message: "Logout successful.",
-  });
-};
+    message: 'Logout successful.',
+  })
+}
 
 /**
  * Get current user profile
@@ -82,32 +87,36 @@ const logout = (req, res) => {
  */
 const getProfile = async (req, res, next) => {
   try {
-    const User = require("../models/User");
-    const user = await User.findById(req.user.userId);
+    const user = await getCurrentUser(req.user.userId)
+    res.status(200).json({
+      success: true,
+      data: user,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
+const listUsers = async (req, res, next) => {
+  try {
+    const users = await listExistingUsers({
+      currentUserId: req.user.userId,
+      search: req.query.search,
+    })
 
     res.status(200).json({
       success: true,
-      data: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
+      data: users,
+    })
   } catch (error) {
-    next(error);
+    next(error)
   }
-};
+}
 
 module.exports = {
   register,
   login,
   logout,
   getProfile,
-};
+  listUsers,
+}
