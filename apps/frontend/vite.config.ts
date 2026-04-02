@@ -8,6 +8,12 @@ export default defineConfig({
   build: {
     assetsDir: 'static',
   },
+  envDir: path.resolve(__dirname, '../..'),
+  server: {
+    proxy: {
+      '/api': 'http://localhost:5000',
+    },
+  },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
