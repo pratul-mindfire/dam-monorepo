@@ -1,5 +1,30 @@
 # DAM Monorepo
 
+## Testing
+
+### Run all tests
+
+```bash
+pnpm test
+```
+
+This runs:
+
+- frontend tests with Vitest and React Testing Library
+- backend tests with Jest
+
+### Frontend-only test command
+
+```bash
+pnpm --filter frontend test
+```
+
+### Backend-only test command
+
+```bash
+pnpm --filter backend test
+```
+
 ## Docker
 
 This repo includes a Docker Compose stack for:
