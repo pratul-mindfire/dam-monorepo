@@ -3,7 +3,7 @@
  * Handles user registration, login, and token generation
  */
 
-import * as jwt from 'jsonwebtoken'
+import jwt from 'jsonwebtoken'
 import { AUTH_MESSAGES } from '@/constants'
 import { JWT_EXPIRE, JWT_SECRET } from '@/config/env'
 import * as userRepository from '@/repositories/user.repository'
