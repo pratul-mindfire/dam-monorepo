@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { APP_TEXT, ROUTES, UI_TEXT } from '@/constants'
 import { useAuth } from '@/hooks/useAuth'
 import '@/styles/sidebar.css'
 
@@ -12,9 +13,9 @@ const Sidebar = () => {
     try {
       await logout()
     } catch (error) {
-      console.error('Logout failed:', error)
+      console.error(UI_TEXT.logoutFailed, error)
     } finally {
-      navigate('/login')
+      navigate(ROUTES.login)
     }
   }
 
@@ -30,7 +31,7 @@ const Sidebar = () => {
     <>
       {/* Mobile Toggle Button */}
       <button className="menu-btn" onClick={toggleSidebar}>
-        ☰
+        {APP_TEXT.mobileMenuToggle}
       </button>
 
       {/* Overlay */}
@@ -38,19 +39,19 @@ const Sidebar = () => {
 
       <div className={`sidebar ${isOpen ? 'open' : ''}`}>
         <div className="sidebar-top">
-          <h2 className="logo">Project Portal</h2>
+          <h2 className="logo">{UI_TEXT.sidebarTitle}</h2>
           {user && <p className="sidebar-link">{user.name}</p>}
 
           <nav>
-            <NavLink to="/assets" className="sidebar-link" onClick={closeSidebar}>
-              Assets
+            <NavLink to={ROUTES.assets} className="sidebar-link" onClick={closeSidebar}>
+              {UI_TEXT.assetsNavLabel}
             </NavLink>
           </nav>
         </div>
 
         <div className="sidebar-footer">
           <button className="logout-btn" onClick={handleLogout} disabled={logoutLoading}>
-            {logoutLoading ? 'Logging out...' : 'Logout'}
+            {logoutLoading ? UI_TEXT.loggingOut : UI_TEXT.logout}
           </button>
         </div>
       </div>

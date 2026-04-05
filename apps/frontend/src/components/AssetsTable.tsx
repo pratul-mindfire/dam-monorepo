@@ -1,6 +1,19 @@
 import type { Asset } from '@/api/asset.api'
-import { ASSET_TEXT, ASSET_STATUS_OPTIONS, ASSET_TYPE_OPTIONS } from '@/constants'
-import { PAGE_SIZE_OPTIONS, formatBytes, formatDate, getAssetOwner, getAssetOwnerId, getAssetPlaceholder, getAssetPreview } from '@/utils/assets'
+import {
+  ASSET_TEXT,
+  ASSET_STATUS_OPTIONS,
+  ASSET_TYPE_OPTIONS,
+  PAGE_SIZE_OPTIONS,
+} from '@/constants'
+import TextField from '@/components/TextField'
+import {
+  formatBytes,
+  formatDate,
+  getAssetOwner,
+  getAssetOwnerId,
+  getAssetPlaceholder,
+  getAssetPreview,
+} from '@/utils/assets'
 
 type AssetsTableProps = {
   assets: Asset[]
@@ -69,15 +82,15 @@ const AssetsTable = ({
           <h2>{ASSET_TEXT.libraryTitle}</h2>
         </div>
         <div className="assets-table-toolbar">
-          <label className="asset-control asset-search-control">
-            <span>{ASSET_TEXT.searchLabel}</span>
-            <input
-              type="search"
-              value={searchInput}
-              onChange={(event) => onSearchChange(event.target.value)}
-              placeholder={ASSET_TEXT.searchPlaceholder}
-            />
-          </label>
+          <TextField
+            id="asset-search"
+            type="search"
+            label={ASSET_TEXT.searchLabel}
+            value={searchInput}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder={ASSET_TEXT.searchPlaceholder}
+            wrapperClassName="asset-control asset-search-control"
+          />
 
           <label className="asset-control">
             <span>{ASSET_TEXT.statusLabel}</span>
@@ -124,7 +137,9 @@ const AssetsTable = ({
       </div>
 
       {isLoading ? <p className="asset-feedback">{ASSET_TEXT.loadingAssets}</p> : null}
-      {!isLoading && isFetching ? <p className="asset-feedback">{ASSET_TEXT.refreshingAssets}</p> : null}
+      {!isLoading && isFetching ? (
+        <p className="asset-feedback">{ASSET_TEXT.refreshingAssets}</p>
+      ) : null}
       {error ? <p className="asset-feedback error">{error}</p> : null}
 
       {!isLoading && !error ? (
@@ -175,9 +190,12 @@ const AssetsTable = ({
                       </td>
                       <td data-label={ASSET_TEXT.nameHeader}>
                         <div className="asset-name-cell">
-                          <strong>{asset.originalName || asset.name || ASSET_TEXT.unnamedAsset}</strong>
+                          <strong>
+                            {asset.originalName || asset.name || ASSET_TEXT.unnamedAsset}
+                          </strong>
                           <span>
-                            {ASSET_TEXT.ownerPrefix} {owner?.name || owner?.email || ownerId || ASSET_TEXT.unknownOwner}
+                            {ASSET_TEXT.ownerPrefix}{' '}
+                            {owner?.name || owner?.email || ownerId || ASSET_TEXT.unknownOwner}
                           </span>
                         </div>
                       </td>
@@ -191,8 +209,12 @@ const AssetsTable = ({
                       <td data-label={ASSET_TEXT.createdHeader}>{formatDate(asset.createdAt)}</td>
                       <td data-label={ASSET_TEXT.outputsHeader}>
                         <div className="asset-output-cell">
-                          <span>{thumbnailCount} {ASSET_TEXT.thumbnailsSuffix}</span>
-                          <span>{variantCount} {ASSET_TEXT.variantsSuffix}</span>
+                          <span>
+                            {thumbnailCount} {ASSET_TEXT.thumbnailsSuffix}
+                          </span>
+                          <span>
+                            {variantCount} {ASSET_TEXT.variantsSuffix}
+                          </span>
                           {asset.url ? (
                             <a href={asset.url} target="_blank" rel="noreferrer">
                               {ASSET_TEXT.openOriginal}
@@ -232,7 +254,9 @@ const AssetsTable = ({
                               </button>
                             </>
                           ) : (
-                            <span className="asset-shared-readonly">{ASSET_TEXT.shareReadonly}</span>
+                            <span className="asset-shared-readonly">
+                              {ASSET_TEXT.shareReadonly}
+                            </span>
                           )}
                         </div>
                       </td>
@@ -249,19 +273,20 @@ const AssetsTable = ({
         <div className="assets-pagination">
           <p className="assets-pagination-summary">
             {totalAssets === 0
-                ? ASSET_TEXT.pageEmpty
-                : `${ASSET_TEXT.showingPrefix} ${(currentPage - 1) * currentLimit + 1}-${Math.min(
-                    currentPage * currentLimit,
-                    totalAssets
-                  )} ${ASSET_TEXT.ofLabel} ${totalAssets}`}
-            </p>
+              ? ASSET_TEXT.pageEmpty
+              : `${ASSET_TEXT.showingPrefix} ${(currentPage - 1) * currentLimit + 1}-${Math.min(
+                  currentPage * currentLimit,
+                  totalAssets
+                )} ${ASSET_TEXT.ofLabel} ${totalAssets}`}
+          </p>
 
           <div className="assets-pagination-actions">
             <button type="button" onClick={onPreviousPage} disabled={currentPage <= 1}>
               {ASSET_TEXT.previousPage}
             </button>
             <span>
-              Page {totalPages === 0 ? 0 : currentPage} of {totalPages}
+              {ASSET_TEXT.paginationPageLabel} {totalPages === 0 ? 0 : currentPage}{' '}
+              {ASSET_TEXT.ofLabel} {totalPages}
             </span>
             <button
               type="button"

@@ -1,4 +1,5 @@
 import React from 'react'
+import { UI_TEXT } from '@/constants'
 import '../styles/error.css'
 
 type Props = {
@@ -20,7 +21,7 @@ class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('Error caught by ErrorBoundary:', error, errorInfo)
+    console.error(UI_TEXT.boundaryLog, error, errorInfo)
   }
 
   render() {
@@ -28,11 +29,11 @@ class ErrorBoundary extends React.Component<Props, State> {
       return (
         <div className="error-container">
           <div className="error-card">
-            <h1>⚠️ Something went wrong</h1>
-            <p>We are working to fix the issue.</p>
+            <h1>{UI_TEXT.boundaryTitle}</h1>
+            <p>{UI_TEXT.boundaryDescription}</p>
 
             <button className="reload-btn" onClick={() => window.location.reload()}>
-              Reload Page
+              {UI_TEXT.boundaryAction}
             </button>
           </div>
         </div>

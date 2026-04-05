@@ -1,6 +1,7 @@
 import type { ExistingUser } from '@/api/auth.api'
-import { ASSET_TEXT } from '@/constants'
-import Modal from '@/shared/components/Modal'
+import { ASSET_DIALOG, ASSET_TEXT } from '@/constants'
+import Modal from '@/components/Modal'
+import TextField from '@/components/TextField'
 
 type ShareAssetModalProps = {
   assetId: string
@@ -28,29 +29,31 @@ const ShareAssetModal = ({
   searchInput,
 }: ShareAssetModalProps) => {
   return (
-    <Modal labelledBy="share-modal-title" onClose={onClose}>
+    <Modal labelledBy={ASSET_DIALOG.shareModalTitleId} onClose={onClose}>
       <div className="share-modal-header">
         <div>
           <p className="assets-kicker">{ASSET_TEXT.shareKicker}</p>
-          <h2 id="share-modal-title">{ASSET_TEXT.shareTitle}</h2>
+          <h2 id={ASSET_DIALOG.shareModalTitleId}>{ASSET_TEXT.shareTitle}</h2>
         </div>
         <button type="button" className="share-modal-close" onClick={onClose}>
           {ASSET_TEXT.shareClose}
         </button>
       </div>
 
-      <label className="asset-control share-search-control">
-        <span>{ASSET_TEXT.shareSearchLabel}</span>
-        <input
-          type="search"
-          value={searchInput}
-          onChange={(event) => onSearchChange(event.target.value)}
-          placeholder={ASSET_TEXT.shareSearchPlaceholder}
-        />
-      </label>
+      <TextField
+        id="share-user-search"
+        type="search"
+        label={ASSET_TEXT.shareSearchLabel}
+        value={searchInput}
+        onChange={(event) => onSearchChange(event.target.value)}
+        placeholder={ASSET_TEXT.shareSearchPlaceholder}
+        wrapperClassName="asset-control share-search-control"
+      />
 
       {isLoading ? <p className="asset-feedback">{ASSET_TEXT.shareLoading}</p> : null}
-      {isError ? <p className="asset-feedback error">{error || ASSET_TEXT.shareLoadError}</p> : null}
+      {isError ? (
+        <p className="asset-feedback error">{error || ASSET_TEXT.shareLoadError}</p>
+      ) : null}
       {error && !isError ? <p className="asset-feedback error">{error}</p> : null}
 
       {!isLoading && !isError ? (

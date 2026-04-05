@@ -1,5 +1,3 @@
-export const API_VERSION = 'v1' as const
-
 export const API_VERSION_HEADER = 'X-API-Version' as const
 
 export const ROUTES = {
@@ -10,6 +8,22 @@ export const ROUTES = {
   fallback: '*',
 } as const
 
+export const API_ENDPOINTS = {
+  auth: {
+    login: `${ROUTES.authBase}/login`,
+    register: `${ROUTES.authBase}/register`,
+    me: `${ROUTES.authBase}/me`,
+    users: `${ROUTES.authBase}/users`,
+    logout: `${ROUTES.authBase}/logout`,
+  },
+  assets: {
+    base: '/assets',
+    upload: '/assets/upload',
+    byId: (assetId: string) => `/assets/${assetId}`,
+    share: (assetId: string) => `/assets/${assetId}/share`,
+  },
+} as const
+
 export const STORAGE_KEYS = {
   authToken: 'token',
 } as const
@@ -18,6 +32,21 @@ export const QUERY_KEYS = {
   authUser: ['auth-user'] as const,
   assets: ['assets'] as const,
   existingUsers: 'existing-users',
+} as const
+
+export const ASSET_UPLOAD = {
+  formFieldName: 'files',
+  multipartContentType: 'multipart/form-data',
+} as const
+
+export const ASSET_DIALOG = {
+  shareModalTitleId: 'share-modal-title',
+} as const
+
+export const APP_TEXT = {
+  mobileMenuToggle: '\u2630',
+  pageNotFoundCode: '404',
+  fileCountSuffix: 'file(s)',
 } as const
 
 export const UI_TEXT = {
@@ -147,6 +176,7 @@ export const ASSET_TEXT = {
   variantsSuffix: 'variants',
   removeFile: 'Remove',
   previewAlt: 'Asset preview',
+  paginationPageLabel: 'Page',
 } as const
 
 export const ASSET_STATUS_OPTIONS = [

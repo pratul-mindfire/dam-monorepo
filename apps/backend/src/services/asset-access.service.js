@@ -8,6 +8,55 @@ import {
 
 const trimTrailingSlash = (value = '') => value.replace(/\/+$/, '')
 
+const toPlainObject = (value) => {
+  if (!value) {
+    return value
+  }
+
+  if (typeof value.toObject === 'function') {
+    return value.toObject()
+  }
+
+  return value
+}
+
+const normalizeId = (value) => {
+  if (!value) {
+    return value
+  }
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (typeof value.toString === 'function') {
+    return value.toString()
+  }
+
+  return value
+}
+
+const normalizeUserRef = (user) => {
+  if (!user) {
+    return user
+  }
+
+  if (typeof user === 'string') {
+    return user
+  }
+
+  const normalizedUser = toPlainObject(user)
+
+  if (!normalizedUser.name && !normalizedUser.email && normalizedUser._id) {
+    return normalizeId(normalizedUser._id)
+  }
+
+  return {
+    ...normalizedUser,
+    _id: normalizeId(normalizedUser._id),
+  }
+}
+
 const buildAssetAccessUrl = ({ objectName }) => {
   if (!objectName) {
     return undefined
@@ -34,21 +83,27 @@ export const serializeAsset = async (asset) => {
     return asset
   }
 
-  const thumbnails = await Promise.all((asset.metadata?.thumbnails || []).map(withAccessUrl))
-  const variants = await Promise.all((asset.metadata?.variants || []).map(withAccessUrl))
+  const normalizedAsset = toPlainObject(asset)
+  const thumbnails = await Promise.all(
+    (normalizedAsset.metadata?.thumbnails || []).map(withAccessUrl)
+  )
+  const variants = await Promise.all((normalizedAsset.metadata?.variants || []).map(withAccessUrl))
 
   return {
-    ...asset,
+    ...normalizedAsset,
+    _id: normalizeId(normalizedAsset._id),
+    userId: normalizeUserRef(normalizedAsset.userId),
+    sharedWith: (normalizedAsset.sharedWith || []).map(normalizeUserRef),
     url: buildAssetAccessUrl({
-      objectName: asset.filename,
+      objectName: normalizedAsset.filename,
     }),
-    metadata: asset.metadata
+    metadata: normalizedAsset.metadata
       ? {
-          ...asset.metadata,
+          ...normalizedAsset.metadata,
           thumbnails,
           variants,
         }
-      : asset.metadata,
+      : normalizedAsset.metadata,
   }
 }
 

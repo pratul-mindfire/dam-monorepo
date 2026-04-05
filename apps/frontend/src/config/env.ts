@@ -1,5 +1,5 @@
-const appEnv = {
-  apiBaseUrl: import.meta.env.VITE_API_BASE ,
-}
+import { parseAppEnv } from '@/schemas/env'
+
+const appEnv = parseAppEnv(import.meta.env)
 
 export default appEnv

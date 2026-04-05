@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import { ROUTES } from '@/constants'
 import MainLayout from '@/layout/MainLayout'
 import Assets from '@/pages/Assets'
 import Login from '@/pages/Login'
@@ -10,8 +11,8 @@ const AppRouter = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path={ROUTES.login} element={<Login />} />
+        <Route path={ROUTES.register} element={<Register />} />
         <Route
           element={
             <ProtectedRoute>
@@ -19,9 +20,9 @@ const AppRouter = () => {
             </ProtectedRoute>
           }
         >
-          <Route path="/assets" element={<Assets />} />
+          <Route path={ROUTES.assets} element={<Assets />} />
         </Route>
-        <Route path="*" element={<NotFound />} />
+        <Route path={ROUTES.fallback} element={<NotFound />} />
       </Routes>
     </BrowserRouter>
   )
