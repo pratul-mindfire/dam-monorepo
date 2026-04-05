@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { QUERY_KEYS } from '@/constants'
 import {
   deleteAsset,
   getAssets,
@@ -13,7 +14,7 @@ export const useAssets = (params?: AssetQueryParams) => {
   const queryClient = useQueryClient()
 
   const assetsQuery = useQuery({
-    queryKey: ['assets', params],
+    queryKey: [...QUERY_KEYS.assets, params],
     queryFn: () => getAssets(params),
     placeholderData: (previousData) => previousData,
   })
@@ -21,14 +22,14 @@ export const useAssets = (params?: AssetQueryParams) => {
   const uploadMutation = useMutation({
     mutationFn: uploadAssets,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assets'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.assets })
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: deleteAsset,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assets'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.assets })
     },
   })
 
@@ -36,7 +37,7 @@ export const useAssets = (params?: AssetQueryParams) => {
     mutationFn: ({ assetId, userId }: { assetId: string; userId: string }) =>
       shareAsset(assetId, userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['assets'] })
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.assets })
     },
   })
 

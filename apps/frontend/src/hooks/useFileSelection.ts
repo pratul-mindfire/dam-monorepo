@@ -52,9 +52,7 @@ export const useFileSelection = () => {
     handleFileSelection,
     handleDrop,
     removeSelectedFile: (indexToRemove: number) => {
-      setSelectedFiles((currentFiles) =>
-        currentFiles.filter((_, index) => index !== indexToRemove)
-      )
+      setSelectedFiles((currentFiles) => currentFiles.filter((_, index) => index !== indexToRemove))
     },
   }
 }

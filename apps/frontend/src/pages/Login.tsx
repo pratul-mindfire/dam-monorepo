@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import TextField from '@/components/TextField'
+import { AUTH_TEXT, ROUTES } from '@/constants'
 import { useAuth } from '@/hooks/useAuth'
-import { getAuthErrorMessage, validateEmail } from '@/utils/auth'
+import { validateLoginForm } from '@/schemas/auth'
+import { getAuthErrorMessage } from '@/utils/auth'
 import '@/styles/login.css'
 
 const Login = () => {
@@ -16,7 +19,7 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/assets')
+      navigate(ROUTES.assets)
     }
   }, [isAuthenticated, navigate])
 
@@ -27,68 +30,58 @@ const Login = () => {
     setPasswordError('')
     setApiError('')
 
-    let isValid = true
+    const validation = validateLoginForm({ email, password })
 
-    if (!email) {
-      setEmailError('Email is required')
-      isValid = false
-    } else if (!validateEmail(email)) {
-      setEmailError('Please enter a valid email')
-      isValid = false
+    setEmailError(validation.errors.email || '')
+    setPasswordError(validation.errors.password || '')
+
+    if (!validation.data) {
+      return
     }
-
-    if (!password) {
-      setPasswordError('Password is required')
-      isValid = false
-    }
-
-    if (!isValid) return
 
     try {
-      await login({ email, password })
-      navigate('/assets')
+      await login(validation.data)
+      navigate(ROUTES.assets)
     } catch (error) {
-      setApiError(getAuthErrorMessage(error, 'Login failed'))
+      setApiError(getAuthErrorMessage(error, AUTH_TEXT.loginFallbackError))
     }
   }
 
   return (
     <div className="login-container">
       <div className="login-card">
-        <h2>Welcome Back</h2>
-        <p className="subtitle">Login to your account</p>
+        <h2>{AUTH_TEXT.loginTitle}</h2>
+        <p className="subtitle">{AUTH_TEXT.loginSubtitle}</p>
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            {emailError ? <p className="error-text">{emailError}</p> : null}
-          </div>
+          <TextField
+            id="login-email"
+            label={AUTH_TEXT.emailLabel}
+            placeholder={AUTH_TEXT.emailPlaceholder}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={emailError}
+          />
 
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            {passwordError ? <p className="error-text">{passwordError}</p> : null}
-          </div>
+          <TextField
+            id="login-password"
+            label={AUTH_TEXT.passwordLabel}
+            type="password"
+            placeholder={AUTH_TEXT.passwordPlaceholder}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={passwordError}
+          />
 
           {apiError ? <p className="error-text">{apiError}</p> : null}
 
           <button type="submit" disabled={loginLoading}>
-            {loginLoading ? 'Logging in...' : 'Login'}
+            {loginLoading ? AUTH_TEXT.loginSubmitting : AUTH_TEXT.loginSubmit}
           </button>
         </form>
 
         <p className="auth-switch-copy">
-          Don&apos;t have an account? <Link to="/register">Register</Link>
+          {AUTH_TEXT.registerPrompt} <Link to={ROUTES.register}>{AUTH_TEXT.registerSubmit}</Link>
         </p>
       </div>
     </div>

@@ -1,7 +1,5 @@
 import axios from 'axios'
 
-export const validateEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
-
 export const getAuthErrorMessage = (error: unknown, fallbackMessage: string) => {
   if (axios.isAxiosError(error)) {
     const message = error.response?.data?.message

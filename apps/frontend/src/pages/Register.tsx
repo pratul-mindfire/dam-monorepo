@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import TextField from '@/components/TextField'
+import { AUTH_TEXT, ROUTES } from '@/constants'
 import { useAuth } from '@/hooks/useAuth'
-import { getAuthErrorMessage, validateEmail } from '@/utils/auth'
+import { validateRegisterForm } from '@/schemas/auth'
+import { getAuthErrorMessage } from '@/utils/auth'
 import '@/styles/login.css'
 
 const Register = () => {
@@ -20,7 +23,7 @@ const Register = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/assets')
+      navigate(ROUTES.assets)
     }
   }, [isAuthenticated, navigate])
 
@@ -33,112 +36,84 @@ const Register = () => {
     setConfirmPasswordError('')
     setApiError('')
 
-    let isValid = true
+    const validation = validateRegisterForm({
+      name,
+      email,
+      password,
+      confirmPassword,
+    })
 
-    if (!name.trim()) {
-      setNameError('Name is required')
-      isValid = false
-    }
+    setNameError(validation.errors.name || '')
+    setEmailError(validation.errors.email || '')
+    setPasswordError(validation.errors.password || '')
+    setConfirmPasswordError(validation.errors.confirmPassword || '')
 
-    if (!email) {
-      setEmailError('Email is required')
-      isValid = false
-    } else if (!validateEmail(email)) {
-      setEmailError('Please enter a valid email')
-      isValid = false
-    }
-
-    if (!password) {
-      setPasswordError('Password is required')
-      isValid = false
-    } else if (password.length < 8) {
-      setPasswordError('Password must be at least 8 characters')
-      isValid = false
-    }
-
-    if (!confirmPassword) {
-      setConfirmPasswordError('Confirm password is required')
-      isValid = false
-    } else if (confirmPassword !== password) {
-      setConfirmPasswordError('Passwords do not match')
-      isValid = false
-    }
-
-    if (!isValid) {
+    if (!validation.data) {
       return
     }
 
     try {
-      await register({
-        name: name.trim(),
-        email: email.trim(),
-        password,
-        confirmPassword,
-      })
-      navigate('/assets')
+      await register(validation.data)
+      navigate(ROUTES.assets)
     } catch (error) {
-      setApiError(getAuthErrorMessage(error, 'Registration failed'))
+      setApiError(getAuthErrorMessage(error, AUTH_TEXT.registerFallbackError))
     }
   }
 
   return (
     <div className="login-container">
       <div className="login-card">
-        <h2>Create Account</h2>
-        <p className="subtitle">Register to start uploading and sharing assets</p>
+        <h2>{AUTH_TEXT.registerTitle}</h2>
+        <p className="subtitle">{AUTH_TEXT.registerSubtitle}</p>
 
         <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Name</label>
-            <input
-              placeholder="Enter your full name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
-            />
-            {nameError ? <p className="error-text">{nameError}</p> : null}
-          </div>
+          <TextField
+            id="register-name"
+            label={AUTH_TEXT.nameLabel}
+            placeholder={AUTH_TEXT.namePlaceholder}
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            error={nameError}
+          />
 
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              placeholder="Enter your email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-            {emailError ? <p className="error-text">{emailError}</p> : null}
-          </div>
+          <TextField
+            id="register-email"
+            label={AUTH_TEXT.emailLabel}
+            placeholder={AUTH_TEXT.emailPlaceholder}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            error={emailError}
+          />
 
-          <div className="form-group">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Create a password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-            {passwordError ? <p className="error-text">{passwordError}</p> : null}
-          </div>
+          <TextField
+            id="register-password"
+            label={AUTH_TEXT.passwordLabel}
+            type="password"
+            placeholder={AUTH_TEXT.createPasswordPlaceholder}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            error={passwordError}
+          />
 
-          <div className="form-group">
-            <label>Confirm Password</label>
-            <input
-              type="password"
-              placeholder="Re-enter your password"
-              value={confirmPassword}
-              onChange={(event) => setConfirmPassword(event.target.value)}
-            />
-            {confirmPasswordError ? <p className="error-text">{confirmPasswordError}</p> : null}
-          </div>
+          <TextField
+            id="register-confirm-password"
+            label={AUTH_TEXT.confirmPasswordLabel}
+            type="password"
+            placeholder={AUTH_TEXT.confirmPasswordPlaceholder}
+            value={confirmPassword}
+            onChange={(event) => setConfirmPassword(event.target.value)}
+            error={confirmPasswordError}
+          />
 
           {apiError ? <p className="error-text">{apiError}</p> : null}
 
           <button type="submit" disabled={registerLoading}>
-            {registerLoading ? 'Creating account...' : 'Register'}
+            {registerLoading ? AUTH_TEXT.registerSubmitting : AUTH_TEXT.registerSubmit}
           </button>
         </form>
 
         <p className="auth-switch-copy">
-          Already have an account? <Link to="/login">Login</Link>
+          {AUTH_TEXT.loginPrompt} <Link to={ROUTES.login}>{AUTH_TEXT.loginSubmit}</Link>
         </p>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import type { ChangeEvent, DragEvent, RefObject } from 'react'
-import { ASSET_TEXT } from '@/constants'
+import { APP_TEXT, ASSET_TEXT } from '@/constants'
 import { formatBytes } from '@/utils/assets'
 
 type UploadPanelProps = {
@@ -84,7 +84,9 @@ const UploadPanel = ({
       <div className="upload-queue-panel">
         <div className="upload-queue-header">
           <h3>{ASSET_TEXT.queueTitle}</h3>
-          <span>{selectedFiles.length} file(s)</span>
+          <span>
+            {selectedFiles.length} {APP_TEXT.fileCountSuffix}
+          </span>
         </div>
 
         {selectedFiles.length === 0 ? (
@@ -92,7 +94,10 @@ const UploadPanel = ({
         ) : (
           <div className="selected-file-list">
             {selectedFiles.map((file, index) => (
-              <div key={`${file.name}-${file.lastModified}-${index}`} className="selected-file-card">
+              <div
+                key={`${file.name}-${file.lastModified}-${index}`}
+                className="selected-file-card"
+              >
                 <div>
                   <strong>{file.name}</strong>
                   <p>
@@ -108,7 +113,9 @@ const UploadPanel = ({
         )}
 
         {uploadError ? <p className="asset-feedback error">{uploadError}</p> : null}
-        {uploadSuccess ? <p className="asset-feedback success">{ASSET_TEXT.uploadSuccess}</p> : null}
+        {uploadSuccess ? (
+          <p className="asset-feedback success">{ASSET_TEXT.uploadSuccess}</p>
+        ) : null}
       </div>
     </section>
   )
