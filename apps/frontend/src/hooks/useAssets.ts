@@ -7,6 +7,8 @@ import {
   type AssetQueryParams,
 } from '@/api/asset.api'
 
+export type ShareAssetMutation = ReturnType<typeof useAssets>['shareMutation']
+
 export const useAssets = (params?: AssetQueryParams) => {
   const queryClient = useQueryClient()
 
