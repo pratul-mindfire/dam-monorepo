@@ -54,13 +54,13 @@ describe('Login page', () => {
 
     renderWithProviders(<Login />, { route: ROUTES.login })
 
-    await user.type(screen.getByLabelText(AUTH_TEXT.emailLabel), 'alex@example.com')
+    await user.type(screen.getByLabelText(AUTH_TEXT.emailLabel), 'pratul@gmail.com')
     await user.type(screen.getByLabelText(AUTH_TEXT.passwordLabel), 'password123')
     await user.click(screen.getByRole('button', { name: AUTH_TEXT.loginSubmit }))
 
     await waitFor(() => {
       expect(login).toHaveBeenCalledWith({
-        email: 'alex@example.com',
+        email: 'pratul@gmail.com',
         password: 'password123',
       })
     })
