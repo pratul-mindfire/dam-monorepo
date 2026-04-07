@@ -4,6 +4,8 @@ import dotenv from 'dotenv'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
+const rootEnvPath = path.resolve(__dirname, '../../../../.env')
+const rootEnvLocalPath = path.resolve(__dirname, '../../../../.env.local')
 
 const parseBoolean = (value) => {
   if (typeof value !== 'string') {
@@ -20,7 +22,12 @@ const parseNumber = (value) => {
 }
 
 dotenv.config({
-  path: path.resolve(__dirname, '../../../../.env'),
+  path: rootEnvPath,
+})
+
+dotenv.config({
+  path: rootEnvLocalPath,
+  override: true,
 })
 
 const env = {

@@ -2,6 +2,8 @@ services:
   mongo:
     image: ${MONGO_IMAGE:-mongo:7}
     restart: unless-stopped
+    ports:
+      - '27017:27017'
     healthcheck:
       test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
       interval: 10s
@@ -15,6 +17,7 @@ services:
     image: ${RABBITMQ_IMAGE:-rabbitmq:4-management}
     restart: unless-stopped
     ports:
+      - '5672:5672'
       - '${RABBITMQ_MANAGEMENT_HOST_PORT:-15672}:${RABBITMQ_MANAGEMENT_CONTAINER_PORT:-15672}'
     healthcheck:
       test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
@@ -33,6 +36,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-local-minio-user}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-local-minio-password}
     ports:
+      - '${MINIO_PORT:-9000}:9000'
       - '${MINIO_CONSOLE_HOST_PORT:-9002}:${MINIO_CONSOLE_CONTAINER_PORT:-9001}'
     healthcheck:
       test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
